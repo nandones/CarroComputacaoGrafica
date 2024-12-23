@@ -6,14 +6,64 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true; // Ativa sombras
 document.body.appendChild(renderer.domElement);
 
-// Luzes
-var ambientLight = new THREE.AmbientLight(0x333333);
+// Luz ambiente - mais intensa para maior brilho geral
+var ambientLight = new THREE.AmbientLight(0x555555); // Ajustado para 0x555555
 scene.add(ambientLight);
 
+// Luz direcional - simulando o Sol
+var directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Luz mais forte para simular o Sol
+directionalLight.position.set(10, 10, -15); // Mesma posição do modelo do Sol
+directionalLight.castShadow = true; // Habilita sombras
+directionalLight.shadow.mapSize.width = 2048; // Resolução da sombra
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 50;
+
+// Ajuste do volume da câmera de sombra para capturar sombras detalhadas
+directionalLight.shadow.camera.left = -20;
+directionalLight.shadow.camera.right = 20;
+directionalLight.shadow.camera.top = 20;
+directionalLight.shadow.camera.bottom = -20;
+
+// Adiciona a luz direcional à cena
+scene.add(directionalLight);
+
+// Luz pontual para iluminação mais localizada
 var pointLight = new THREE.PointLight(0xffffff, 1, 100);
 pointLight.position.set(5, 10, 5);
 pointLight.castShadow = true;
 scene.add(pointLight);
+
+// Função para criar as estrelas
+function criarEstrelas(qtdEstrelas) {
+    var geometriaEstrelas = new THREE.BufferGeometry();
+    var posicoes = [];
+
+    for (var i = 0; i < qtdEstrelas; i++) {
+        // Gera posições aleatórias para as estrelas em uma esfera ao redor da cena
+        var x = (Math.random() - 0.5) * 500; // Valores entre -250 e 250
+        var y = (Math.random() - 0.5) * 500;
+        var z = (Math.random() - 0.5) * 500;
+        posicoes.push(x, y, z);
+    }
+
+    geometriaEstrelas.setAttribute('position', new THREE.Float32BufferAttribute(posicoes, 3));
+
+    // Material das estrelas
+    var materialEstrelas = new THREE.PointsMaterial({
+        color: 0xffffff,  // Cor branca para estrelas
+        size: 0.7,        // Tamanho dos pontos
+        sizeAttenuation: true, // Faz o tamanho diminuir com a distância
+    });
+
+    // Criação do sistema de pontos (estrelas)
+    var estrelas = new THREE.Points(geometriaEstrelas, materialEstrelas);
+
+    scene.add(estrelas);
+}
+
+// Adiciona 1000 estrelas à cena
+criarEstrelas(1000);
 
 // Curva para a pista
 var pontos = [
@@ -119,7 +169,21 @@ loader.load('sol3D/scene.gltf', function(gltf) {
             child.receiveShadow = true;
         }
     });
-    scene.add(sol); // Adiciona o helicóptero à cena    
+    scene.add(sol); // Adiciona o sol à cena    
+});
+
+var lua;
+loader.load('lua3D/scene.gltf', function(gltf) {
+    lua = gltf.scene;
+    lua.position.set(4, 7, 0); // Posição inicial no céu
+    lua.scale.set(0.0005, 0.0005, 0.0005); // Ajuste de escala
+    lua.traverse(function(child) {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+    scene.add(lua); // Adiciona o lua à cena    
 });
 
 var terra;
@@ -133,17 +197,21 @@ loader.load('terra3D/scene.gltf', function(gltf) {
             child.receiveShadow = true;
         }
     });
-    scene.add(terra); // Adiciona o helicóptero à cena    
+    scene.add(terra); // Adiciona o terra à cena    
 });
 
 // Curva do helicóptero
 var curvaHelicoptero = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-10, 3, 0),       // Ponto inicial mais baixo
-    new THREE.Vector3(5, 4, -5),      // Mais perto, e mais baixo que a moto
-    new THREE.Vector3(5, 4, 10),      // Mais baixo que a rampa
-    new THREE.Vector3(-5, 3, 5),     // Mais baixo que a rampa
-    new THREE.Vector3(-10, 3, 0),      // Retorno ao ponto inicial
-  ], true);
+    new THREE.Vector3(-10, 3, 0),
+    new THREE.Vector3(-7, 3, -7),
+    new THREE.Vector3(0, 3, -10),
+    new THREE.Vector3(7, 3, -7), 
+    new THREE.Vector3(10, 3, 0), 
+    new THREE.Vector3(7, 3, 7),  
+    new THREE.Vector3(0, 3, 10), 
+    new THREE.Vector3(-7, 3, 7), 
+    new THREE.Vector3(-10, 3, 0),
+], true);
 
 var progressoHelicoptero = 0;
 
@@ -179,6 +247,9 @@ controls.maxPolarAngle = Math.PI / 2; // Impede rotação abaixo do horizonte
 // Renderização
 function animate() {
     requestAnimationFrame(animate);
+    if(terra){
+        terra.rotation.y += 0.003;
+    }
     moverMoto();
     moverHelicoptero();
     controls.update(); // Atualiza os controles da câmera
