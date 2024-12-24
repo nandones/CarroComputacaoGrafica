@@ -9,21 +9,34 @@
     body {
       margin: 0;
       overflow: hidden;
+      background-color: #000000;
+      /* Cor de fundo para o modo noturno */
+      color: white;
+      /* Texto branco */
     }
 
-    canvas {
-      display: block;
+    .btn-dark-mode {
+      background-color: #333;
+      color: white;
+      border: none;
+    }
+
+    .btn-dark-mode:hover {
+      background-color: #444;
     }
   </style>
 </head>
 
 <body>
+  <!-- Botão com classes do Bootstrap e customização para modo noturno -->
+  <button class="btn btn-dark btn-dark-mode" onclick="playMusic('public/sounds/Shooting_Stars.mp3')">Play Music</button>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
 
 
   <script src="OrbitControls.js"></script>
   <script src="script.js"></script>
+  <script src="music.js"></script>
 
 </body>
 
